@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿Cuánto me conoces?</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #74b9ff, #a29bfe); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .quiz-container { background-color: white; border-radius: 20px; padding: 30px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); text-align: center; }
+        h1 { color: #2d3436; margin-bottom: 20px; font-size: 24px; }
+        .progress { font-size: 14px; color: #b2bec3; margin-bottom: 10px; }
+        .question { font-size: 18px; color: #2d3436; font-weight: bold; margin-bottom: 25px; min-height: 50px; }
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .btn { background-color: #f1f2f6; color: #2d3436; border: 2px solid transparent; padding: 15px; font-size: 16px; border-radius: 12px; cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
+        .btn:active { transform: scale(0.98); }
+        .correct { background-color: #2ecc71 !important; color: white !important; }
+        .wrong { background-color: #e74c3c !important; color: white !important; }
+        .input-name { width: 100%; padding: 15px; font-size: 16px; border-radius: 12px; border: 2px solid #dfe6e9; margin-bottom: 15px; outline: none; text-align: center; }
+        .input-name:focus { border-color: #6c5ce7; }
+        .score { font-size: 48px; font-weight: bold; color: #6c5ce7; margin: 20px 0; }
+        #quiz-screen, #result-screen { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container">
+        <!-- Pantalla de Bienvenida -->
+        <div id="welcome-screen">
+            <h1>👋 ¡Hola!</h1>
+            <p style="color: #636e72; margin-bottom: 20px;">Escribe tu nombre para jugar:</p>
+            <input type="text" id="friend-name" class="input-name" placeholder="Tu nombre o apodo">
+            <button class="btn" style="background-color: #6c5ce7; color: white; width: 100%;" onclick="registerPlayer()">Empezar Juego</button>
+        </div>
+
+        <!-- Pantalla de Juego -->
+        <div id="quiz-screen">
+            <div class="progress" id="progress">Pregunta 1 de 3</div>
+            <div class="question" id="question-text">Cargando...</div>
+            <div class="options-container" id="options-container"></div>
+        </div>
+
+        <!-- Pantalla de Resultados -->
+        <div id="result-screen">
+            <h1>¡Terminaste!</h1>
+            <p>Tu puntuación fue de:</p>
+            <div class="score" id="score-text">0 / 0</div>
+            <p id="saving-text" style="color: #6c5ce7; font-weight: bold; margin-bottom: 25px;">Guardando tu resultado...</p>
+        </div>
+    </div>
+
+    <script>
+        // 🔗 PEGA TU URL DE GOOGLE APPS SCRIPT AQUÍ ADENTRO:
+        const DATABASE_URL = "https://script.google.com/macros/s/AKfycbzw86IqX4y8vM-fPSo0HmZDs9_lWDI8xDatPY-nmBe6kx_GXJ6puWVV4SfNsn1Kt3P50A/exec";
+
+        // CONFIGURACIÓN DE PREGUNTAS
+        const myQuestions = [
+            {
+                question: "¿Cuál es mi comida favorita en todo el mundo?",
+                options: ["Pizza", "Tostadas rojas", "Hamburguesas", "Sushi"],
+                correctAnswer: 1 // Los números empiezan desde el 0 (0=Pizza, 1=Tacos, 2=Hamburguesas...)
+            },
+            {
+                question: "¿Qué prefiero hacer un fin de semana?",
+                options: ["Salir de fiesta", "Salir con amigos", "Quedarme en casa a leer libros"],
+                correctAnswer: 1
+            },
+            {
+                question: "¿Cuál es mi color favorito?",
+                options: ["Azul", "Negro", "Verde", "Rojo"],
+                correctAnswer: 0
+            },
+            {
+                question: "¿Cual es mi maid de MK9?",
+                options: ["Scorpion", "Sub zero", "Noob saibot", "Smoke"],
+                correctAnswer: 0
+            },
+            {
+                question: "¿A que edad me cai del 2do piso?",
+                options: ["5", "4", "6","7"],
+                correctAnswer: 1
+            },
+            {
+                question: "¿Con quien estaba jugando fornite cuando me esguince?",
+                options: ["Chuy", "Leo", "Rodo","Abraham"],
+                correctAnswer: 3
+            },
+            {
+                question: "¿Cual es mi juego favorito de peleas?",
+                options: ["Street fighter", "MK", "KOF"],
+                correctAnswer: 1
+            },
+            {
+                question: "¿Cual es mi segundo nombre?",
+                options: ["Mario", "Reymundo", "Mariano", "Wenceslao"],
+                correctAnswer: 2
+            },
+            {
+                question: "¿Cual es el segundo nombre de Peque?",
+                options: ["Maria", "Chocolate", "Luz", "Annia"],
+                correctAnswer: 0
+            },
+            {
+                question: "¿En que municipio vivo?",
+                options: ["Linarea", "Hualahuses", "Montemorelos", "Reynosa"],
+                correctAnswer: 1
+            },
+            {
+             
+question: "¿Cual es mi deporte favorito?",
+                options: ["futbol", "Basketbol", "Voleibol", "Beisbol"],
+                correctAnswer: 3
+            },
+            {
+                question: "¿Que clase extraño de la secundaria?",
+                options: ["Educacion fisica", "Robotica", "Informatica", "Energias alternativas"],
+                correctAnswer: 0
+            },
+            {
+                question: "¿Quien fue mi primer amigo de la secundaria?",
+                options: ["Chuy", "Leo", "Rodo","Abraham"],
+                correctAnswer: 0
+            },
+            {
+                question: "¿Cual es mi numero favorito?",
+                options: ["0", "1", "2", "3"],
+                correctAnswer: 2
+            },
+            {
+                question: "¿Cual es mi pan favorito?",
+                options: ["Concha", "Volcan", "Pan de puerco", "Envidiosa"],
+                correctAnswer: 2
+            }, 
+            {
+                question: "¿Cual es mi anime favorito?",
+                options: ["Naruto", "One piece", "Jujutsu kaiser", "Dragon ball"],
+                correctAnswer: 1
+            },
+            {
+                question: "¿E reprobado un examen?",
+                options: ["si", "no"],
+                correctAnswer: 0
+            },
+            {
+                question: "¿Cual fue el primer sonic que jugue?",
+                options: ["2006", "Generetions", "Aventure","Aventure 2"],
+                correctAnswer: 0
+            },
+            {
+                question: "¿Como se llama mi peluche de elefante?",
+                options: ["Stuart", "Nit", "Perrito dormilon","Osito amigable"],
+                correctAnswer: 1
+            },
+            {
+                question: "¿Mi animal favorito?",
+                options: ["Perro", "Gato", "Oso","Cerdo"],
+                correctAnswer: 3
+            }
+
+
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let canAnswer = true;
+        let playerName = "";
+
+        function registerPlayer() {
+            const nameInput = document.getElementById('friend-name').value.trim();
+            if(nameInput === "") { alert("Por favor, escribe tu nombre."); return; }
+            playerName = nameInput;
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('quiz-screen').style.display = 'block';
+            showQuestion();
+        }
+
+        function showQuestion() {
+            canAnswer = true;
+            const currentQuestion = myQuestions[currentQuestionIndex];
+            document.getElementById('progress').innerText = `Pregunta ${currentQuestionIndex + 1} de ${myQuestions.length}`;
+            document.getElementById('question-text').innerText = currentQuestion.question;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            currentQuestion.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.innerText = option;
+                button.classList.add('btn');
+                button.addEventListener('click', () => selectAnswer(index, button));
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function selectAnswer(selectedIndex, selectedButton) {
+            if (!canAnswer) return;
+            canAnswer = false;
+
+            const currentQuestion = myQuestions[currentQuestionIndex];
+            const buttons = document.querySelectorAll('.options-container .btn');
+
+            if (selectedIndex === currentQuestion.correctAnswer) {
+                selectedButton.classList.add('correct');
+                score++;
+            } else {
+                selectedButton.classList.add('wrong');
+                buttons[currentQuestion.correctAnswer].classList.add('correct');
+            }
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < myQuestions.length) {
+                    showQuestion();
+                } else {
+                    saveResults();
+                }
+            }, 1500);
+        }
+
+        function saveResults() {
+            document.getElementById('quiz-screen').style.display = 'none';
+            document.getElementById('result-screen').style.display = 'block';
+            document.getElementById('score-text').innerText = `${score} / ${myQuestions.length}`;
+
+            // Si no pusiste la URL, se salta el guardado para pruebas locales
+            if (DATABASE_URL.includes("TU_URL_DE_APPS_SCRIPT")) {
+                document.getElementById('saving-text').innerText = "Modo de prueba (No conectado a Excel).";
+                return;
+            }
+
+            // Envía los datos al Excel mediante el puente de Google
+            fetch(DATABASE_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre: playerName,
+                    puntuacion: `${score}/${myQuestions.length}`
+                })
+            })
+            .then(() => {
+                document.getElementById('saving-text').innerText = "✅ ¡Resultado guardado en el Excel!";
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('saving-text').innerText = "❌ Error al guardar.";
+            });
+        }
+    </script>
+</body>
+</html>
